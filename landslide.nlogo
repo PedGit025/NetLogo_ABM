@@ -169,7 +169,6 @@ to update-monitor
   set-current-plot "Sediment Stats"
   plot total-sediment
 end
-
 @#$#@#$#@
 GRAPHICS-WINDOW
 684
