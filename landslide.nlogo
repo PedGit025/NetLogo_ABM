@@ -171,13 +171,13 @@ to update-monitor
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-684
-21
-1121
-459
+1083
+13
+1872
+803
 -1
 -1
-13.0
+23.67
 1
 10
 1
@@ -198,10 +198,10 @@ ticks
 30.0
 
 BUTTON
-15
-31
-81
-64
+43
+296
+109
+329
 setup
 setup
 NIL
@@ -215,10 +215,10 @@ NIL
 1
 
 BUTTON
-115
-31
-178
-64
+143
+296
+206
+329
 go
 go
 T
@@ -232,10 +232,10 @@ NIL
 1
 
 SLIDER
-206
-35
-378
-68
+234
+300
+406
+333
 rainfall-rate
 rainfall-rate
 0
@@ -247,25 +247,25 @@ NIL
 HORIZONTAL
 
 SLIDER
-401
-36
-573
-69
+429
+301
+601
+334
 landslide-threshold
 landslide-threshold
 0
 100
-52.0
+50.0
 1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-205
-97
-377
-130
+233
+362
+405
+395
 sediment-flow-rate
 sediment-flow-rate
 0
@@ -277,25 +277,25 @@ NIL
 HORIZONTAL
 
 SLIDER
-401
-100
-573
-133
+429
+365
+601
+398
 number-of-trees
 number-of-trees
 0
 800
-443.0
+100.0
 1
 1
 NIL
 HORIZONTAL
 
 MONITOR
+735
 686
-483
-835
-528
+884
+731
 Cumulative Rainfall (mm)
 total-rainfall
 17
@@ -303,10 +303,10 @@ total-rainfall
 11
 
 MONITOR
-689
-541
-841
-586
+738
+744
+890
+789
 Patches Affected N/1089
 total-landslides
 17
@@ -314,10 +314,10 @@ total-landslides
 11
 
 MONITOR
-845
-483
-999
-528
+894
+686
+1048
+731
 Cumulative Sediment (kg)
 total-sediment
 17
@@ -325,10 +325,10 @@ total-sediment
 11
 
 MONITOR
-848
-542
-983
-587
+897
+745
+1032
+790
 Total Trees Remaining
 total-trees
 17
@@ -336,10 +336,10 @@ total-trees
 11
 
 PLOT
-4
-292
-286
-496
+712
+456
+1035
+660
 Landslide Stats
 Time (ticks)
 total-landslides over time)
@@ -354,10 +354,10 @@ PENS
 "default" 1.0 0 -7500403 true "" "plot total-landslides"
 
 PLOT
-331
-168
-651
-368
+716
+240
+1036
+440
 Rainfall Stats
 Time (ticks)
 Total Rainfall
@@ -372,10 +372,10 @@ PENS
 "default" 1.0 0 -16777216 true "" "plot total-rainfall"
 
 PLOT
-330
-398
-660
-576
+716
+40
+1036
+214
 Sediment Stats
 Time (ticks)
 Total Sediment
@@ -392,39 +392,104 @@ PENS
 @#$#@#$#@
 ## WHAT IS IT?
 
-(a general understanding of what the model is trying to show or explain)
+This model simulates rainfall-induced landslides on a psuedo sloped terrain. it shows the effect of continued rainfall leads to soil saturation, terrain instability, sediment flow, and vegetation loss. The model is intended to help understand the dynamics of landslide under different environmental conditions such as rainfall intensity, sediment threshold and vegetation.
 
 ## HOW IT WORKS
 
-(what rules the agents use to create the overall behavior of the model)
+The model uses an agent-based approach with two main types of agents:
+- **Patches** represent units of terrain and hold information about elevation, soil saturation, sediment, and IF they have experienced a landslide.
+- **Turtles** represent trees that grow on patches with sufficiently high elevation. Trees are removed if a landslide occurs nearby (neighbor).
+
+Each tick (time step), the model performs the following actions:
+1. **Rainfall** increases soil saturation across all patches.
+2. **Saturation Check** limits saturation at 100%.
+3. **Sediment Flow** moves sediments from failed patches to lower neighboring patches.
+4. **Landslide Check** compares slope and saturation to determine if a patch becomes unstable. If stability falls below the user-defined (landslide-threshold slider) threshold, a landslide is triggered.
+5. **Landslide Effects** include elevation loss, color change (to brown, from white/green), added sediment, and tree removal.
+6. **Monitors and Plots** update total rainfall, landslides, sediment, and remaining trees.
+
+The simulation stops when all terrain patches have failed.
 
 ## HOW TO USE IT
 
-(how to use the model, including a description of each of the items in the Interface tab)
+Use the sliders to adjust params and click the buttons in the Interface tab to configure and run the model:
+
+**Sliders:**
+  `rainfall-rate`: Controls how much rain (in mm) falls per tick.
+  `landslide-threshold`: Determines how easily patches fail (lower = more frequent landslides).
+  `sediment-flow-rate`: Controls how much sediment is transferred downhill during landslides.
+  `number-of-trees`: Sets the initial number of tree agents on the terrain.
+
+**Buttons:**
+  `setup`: __init__ the environment and plants the trees.
+  `go`: Runs the simulation continuously until manually stopped or the terrain fully fails.
+
+**Monitors:**
+  `total-trees`: Number of surviving trees.
+  `total-rainfall`: Accumulated rainfall.
+  `total-landslides`: Total number of landslides that occurred.
+  `total-sediment`: Total sediment moved due to landslides.
+
+**Plots:**
+  `Landslide Stats`: Tracks number of landslides over time.
+  `Rainfall Stats`: Tracks cumulative rainfall.
+  `Sediment Stats`: Tracks sediment accumulation.
 
 ## THINGS TO NOTICE
 
-(suggested things for the user to notice while running the model)
+Observe how saturation levels increase and eventually trigger landslides.
+
+Watch how landslides change the terrain (brown color) and reduce elevation.
+
+See how sediment flows to neighboring patches after failure.
+
+Monitor the survival of tree and patch agents as the environment degrades.
 
 ## THINGS TO TRY
 
-(suggested things for the user to try to do (move sliders, switches, etc.) with the model)
+1.Increase the `rainfall-rate` to simulate heavy storms and observe faster failure AVERAGE 20 mm of rain.
+
+2.Lower the `landslide-threshold` to simulate weaker terrain and trigger early landslides.
+
+3.Increase `number-of-trees` and observe if more vegetation delays or prevents slope failure.
+
+4.Adjust `sediment-flow-rate` to study how erosion and deposition patterns change.
 
 ## EXTENDING THE MODEL
 
-(suggested things to add or change in the Code tab to make the model more complicated, detailed, accurate, etc.)
+Here are some possible extensions;
+
+- Add actual DEM data to simulate possible landslide.
+
+- fix Model's soil based from actual data or location.
+
+- Sediment collision.
+
+- Resistance from landslide through trees
 
 ## NETLOGO FEATURES
 
-(interesting or unusual features of NetLogo that the model uses, particularly in the Code tab; or where workarounds were needed for missing features)
+Uses `patches-own` and `turtles-own` variables to store agent states.
+
+- Applies `neighbors with` for localized sediment flow.
+- Employs elevation-based pseudo-slope using `(100 - pxcor)` to simulate downhill terrain.
+- Uses visual color scaling and `pcolor` to indicate environmental changes (e.g.,white to - brown or green to brown, the higher the slope the white it is).
 
 ## RELATED MODELS
 
-(models in the NetLogo Models Library and elsewhere which are of related interest)
+**NetLogo Models Library**:
+"Fire" – similar behavior of spreading through an environment.
+"Forest Fire" – vegetation and environmental interactions.
 
 ## CREDITS AND REFERENCES
 
-(a reference to the model's URL on the web if it has one, as well as any other necessary credits, citations, and links)
+Created by CA group 1 Grad/Undergrad,De La Salle University Manila, as part of our agent based modeling project in CA class? (forgot out class code) .
+
+For educational use. No external datasets or libraries were used.
+
+The model idea was inspired by the frequent occurrence of landslides in the Philippines, particularly during the rainy season. Mountainous regions that are heavily deforested or exploited for natural resources are prone to such.
+
+This model aims to simulate and better understand how rainfall, vegetation, and terrain interact to contribute to landslides.
 @#$#@#$#@
 default
 true
