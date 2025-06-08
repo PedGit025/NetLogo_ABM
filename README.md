@@ -100,3 +100,11 @@ For educational use. No external datasets or libraries were used.
 The model idea was inspired by the frequent occurrence of landslides in the Philippines, particularly during the rainy season. Mountainous regions that are heavily deforested or exploited for natural resources are prone to such.
 
 This model aims to simulate and better understand how rainfall, vegetation, and terrain interact to contribute to landslides.
+
+## Created By
+
+Created by: 
+
+https://github.com/jrcala7
+https://github.com/PedGit025
+https://github.com/jasgayamo
