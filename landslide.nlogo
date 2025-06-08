@@ -59,6 +59,7 @@ to go
   saturate
   flow-sediment
   check-landslide
+  deposit-sediment
   update-monitor
 
   tick
@@ -144,14 +145,15 @@ to trigger-landslide
 end
 
 to deposit-sediment
-  ; (Unused unless we need to check for this? baka want ni doc, call this explicitly)
   ask patches [
     if sediment > 0 [
       let target-patch min-one-of neighbors with [elevation < [elevation] of self] [
         elevation
       ]
-      ask target-patch [
-        set sediment sediment + sediment-flow-rate
+      if target-patch != nobody [
+        ask target-patch [
+          set sediment sediment + sediment-flow-rate
+        ]
       ]
     ]
   ]
@@ -362,9 +364,9 @@ Rainfall Stats
 Time (ticks)
 Total Rainfall
 0.0
-1000.0
-0.0
 200.0
+0.0
+100.0
 true
 false
 "" ""
