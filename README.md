@@ -93,7 +93,7 @@ Uses `patches-own` and `turtles-own` variables to store agent states.
 
 ## CREDITS AND REFERENCES
 
-Created by CA group 1 Grad/Undergrad,De La Salle University Manila, as part of our agent based modeling project in CA class? (forgot out class code) .
+Created by CA group 1 Grad/Undergrad,De La Salle University Manila, as part of our agent based modeling project in CA class CSC931M G01.
 
 For educational use. No external datasets or libraries were used.
 
