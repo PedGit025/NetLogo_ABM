@@ -1,49 +1,56 @@
+breed [raindrops raindrop] ; rain particles
+breed [trees tree] ; tree bruh
+
 globals [
-  total-rainfall         ; mm of rainfall over all patches
-  total-landslides       ; number of landslide events
-  total-sediment         ; kg or unitless measure of sediment moved
-  total-trees            ; number of remaining trees (turtles)
+  total-rainfall   ; mm of rainfall over all patches
+  total-landslides ; number of landslide events
+  total-sediment   ; kg measure of sediment moved
+  total-trees      ; number of remaining trees (turtles)
 ]
 
 patches-own [
-  elevation              ; terrain height (unitless or meters if scaled)
-  saturation             ; % saturation (0–100)
-  sediment               ; kg or unitless sediment on patch
-  failed?                ; has landslide occurred here?
+  elevation    ; terrain height (meters if scaled)
+  saturation   ; % saturation (0–100)
+  sediment     ; kg sediment on patch
+  failed?      ; has landslide occurred here?
+  has-tree?    ; if a patch has a tree init
+  had-tree?    ; if patch used to have a tree but a landslid occur
 ]
 
-turtles-own [
-  tree?
-]
 
-; Slider: "rainfall-rate" [0, 5] (mm per tick) – controls rainfall per time step
-; Slider: "landslide-threshold" [0, 100] (stability score threshold)
+; Slider: "rainfall-rate" [0.1, 2] (mm per tick) – controls rainfall per time step
+; Slider: "landslide-threshold" [-6, 0] (stability score threshold)
 ; Slider: "sediment-flow-rate" [0, 1] (fraction of sediment moved per tick)
-; Slider: "number-of-trees" [0, 800] (number of tree turtles to create)
+; Slider: "number-of-trees" [0, 250] (number of tree turtles to create)
+
 
 to setup
   clear-all
-  set-default-shape turtles "tree"
+  set-default-shape trees "tree"
+  set-default-shape raindrops "dot"
 
-  ; Initialize terrain
+  ; __init__ terrain
   ask patches [
     set elevation (100 - pxcor) + random-float 20   ; pseudo-slope
-    set pcolor scale-color green elevation 0 100
+    set pcolor scale-color green elevation 0 140
     set saturation 0
     set sediment 0
     set failed? false
+    set has-tree? false
+    set had-tree? false
   ]
 
-  ; Create tree turtles
-  create-turtles number-of-trees [
-    set tree? true
-    set color brown
-
-    let target-patch one-of patches with [elevation > 50]
-    if target-patch != nobody [
-      move-to target-patch
+  create-trees number-of-trees [
+  set color brown
+  let target-patch one-of patches with [elevation > 50 and not failed?]
+  if target-patch != nobody [
+    move-to target-patch
+    ask patch-here [
+      set has-tree? true
+      set had-tree? true
     ]
   ]
+]
 
   set total-rainfall 0
   set total-landslides 0
@@ -54,7 +61,6 @@ to setup
 end
 
 to go
-  ; print (word "Tick: " ticks " | Trees: " count turtles with [tree?])
   rain
   saturate
   flow-sediment
@@ -62,25 +68,50 @@ to go
   deposit-sediment
   update-monitor
 
-  tick
-  wait 0.1
+  ; flash green to show trees location and simulate visually that they are taking in water
+  ask patches with [has-tree? and not failed?] [
+    set pcolor ifelse-value (ticks mod 10 < 5) [green + 3] [green]
+  ]
 
-  ; Stop if all patches are brown (landslide occurred everywhere)
+  ; flash black if tree was lost in landslide
+  ask patches with [failed? and had-tree?] [
+    set pcolor ifelse-value (ticks mod 10 < 5) [black] [brown]
+  ]
+
+  ; label patch with T if it has tree for debugging
+  ask patches [
+    set plabel ifelse-value had-tree? ["T"] [""]
+  ]
+
+  tick
+  wait 0.1 ;remove this for faster sim
+
   if all? patches [pcolor = brown] [
     user-message "Simulation stopped: All terrain has failed (fully landslided)."
     stop
   ]
-
-
 end
 
-to rain ; Apply rainfall to all patches
-
+to rain
   ask patches [
     set saturation saturation + rainfall-rate
   ]
 
-  set total-rainfall total-rainfall + rainfall-rate ; Track total rainfall realistically (mm per tick, not per patch)
+  set total-rainfall total-rainfall + rainfall-rate
+
+  if rainfall-rate > 0 [
+  ;print (word "Creating raindrops: " floor (rainfall-rate * 10))
+  create-raindrops floor (rainfall-rate * 10) [
+    setxy random-xcor max-pycor
+    set color blue
+    set size 0.5
+  ]
+]
+  ; removes raindrop
+  ask raindrops [
+    set ycor ycor - 0.4  ; falling speed
+    if ycor < min-pycor [ die ]
+  ]
 end
 
 
@@ -105,14 +136,22 @@ to flow-sediment
 end
 
 to check-landslide
-  ; Try each patch in random order, find the first vulnerable one
+  ; landslide will start to happen after this threshold, quick search says landslide happens after 50mm of rain
+  if total-rainfall < 50 [ stop ]
+
   let vulnerable-patch nobody
 
   ask one-of patches with [not failed?] [
     let slope (elevation - [elevation] of patch-at -1 0)
-    let stability (slope - (saturation / 2))
+    let tree-bonus 0
+    if has-tree? [
+      set tree-bonus random-float 50 + 10
+    ]
+    let strength (slope - (saturation / 2)) + tree-bonus
 
-    if stability < landslide-threshold [
+    print (word "Tick " ticks " Patch (" pxcor ", " pycor ") stability: " precision strength 2 " threshold: " landslide-threshold)
+
+    if strength < landslide-threshold [
       set vulnerable-patch self
     ]
   ]
@@ -122,28 +161,55 @@ to check-landslide
   ]
 end
 
-
-
 to trigger-landslide
+  let original-tree? has-tree?  ; if patch had tree before landslide
+
+  let slope (elevation - [elevation] of patch-at -1 0)
+  let tree-bonus 0
+  if original-tree? [
+    set tree-bonus random-float 60 + 10
+  ]
+  let strength (slope - (saturation / 2)) + (tree-bonus / 10)  ; scaled tree bonus visibly
+
+  ; Update patch to landslide state
   set pcolor brown
   set failed? true
   set saturation 0
-  set sediment sediment + 5           ; 5 kg or units of sediment added
-  set elevation elevation - 10        ; terrain erodes by 10 units
+  set sediment sediment + 5
+  set elevation elevation - 10
 
-  ; Remove trees affected by landslide
-  ask turtles in-radius 2 [
-    if tree? [
-      die
-    ]
+  ; Remove tree
+  ask trees-here [
+    die
   ]
-  ; update total-trees immediately after trees die
-  set total-trees count turtles with [tree?]
 
+  set has-tree? false
+  if has-tree? [
+    set had-tree? true
+  ]
+
+  if original-tree? [
+  set had-tree? true
+  ]
+
+  set has-tree? false
+
+  ; Update globals
+  set total-trees count trees
   set total-landslides total-landslides + 1
-  set total-sediment total-sediment + sediment
+  set total-sediment total-sediment + 5
+
+  ; echo per landslide event:
+  ifelse original-tree? [
+    print (word "Tick " ticks " yes tree landslide at (" pxcor ", " pycor ") slope "
+                precision slope 2 " saturation strength " precision strength 2)
+  ] [
+    print (word "Tick " ticks " no tree landslide at (" pxcor ", " pycor ") slope "
+                precision slope 2 " saturation strength " precision strength 2)
+  ]
 end
 
+; transfer sediment to slower slope after landslide
 to deposit-sediment
   ask patches [
     if sediment > 0 [
@@ -160,7 +226,7 @@ to deposit-sediment
 end
 
 to update-monitor
-  set total-trees count turtles with [tree?]
+  set total-trees count trees
 
   set-current-plot "Landslide Stats"
   plot total-landslides
@@ -240,7 +306,7 @@ SLIDER
 333
 rainfall-rate
 rainfall-rate
-0
+0.1
 0.2
 0.1
 0.01
@@ -255,10 +321,10 @@ SLIDER
 334
 landslide-threshold
 landslide-threshold
-0
-100
-50.0
+-6
 1
+-6.0
+.5
 1
 NIL
 HORIZONTAL
@@ -272,7 +338,7 @@ sediment-flow-rate
 sediment-flow-rate
 0
 1
-0.5
+0.2
 0.1
 1
 NIL
@@ -286,7 +352,7 @@ SLIDER
 number-of-trees
 number-of-trees
 0
-800
+250
 100.0
 1
 1
@@ -338,24 +404,6 @@ total-trees
 11
 
 PLOT
-712
-456
-1035
-660
-Landslide Stats
-Time (ticks)
-total-landslides over time)
-0.0
-100.0
-0.0
-100.0
-false
-false
-"" ""
-PENS
-"default" 1.0 0 -7500403 true "" "plot total-landslides"
-
-PLOT
 716
 240
 1036
@@ -364,9 +412,9 @@ Rainfall Stats
 Time (ticks)
 Total Rainfall
 0.0
-200.0
+10.0
 0.0
-100.0
+10.0
 true
 false
 "" ""
@@ -391,6 +439,24 @@ false
 PENS
 "default" 1.0 0 -16777216 true "" "plot total-sediment"
 
+PLOT
+725
+467
+1035
+646
+LandSlide Stats
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -16777216 true "" "plot total-landslides"
+
 @#$#@#$#@
 ## WHAT IS IT?
 
@@ -400,7 +466,7 @@ This model simulates rainfall-induced landslides on a psuedo sloped terrain. it 
 
 The model uses an agent-based approach with two main types of agents:
 - **Patches** represent units of terrain and hold information about elevation, soil saturation, sediment, and IF they have experienced a landslide.
-- **Turtles** represent trees that grow on patches with sufficiently high elevation. Trees are removed if a landslide occurs nearby (neighbor).
+- **Turtles** represent trees that grow on patches with sufficiently high elevation. Trees are removed if a landslide happen on the same patch. Trees are pulsing green to visually see trees are absorbing water, pulsing black indicating the patch used to have a tree but is not landslid.
 
 Each tick (time step), the model performs the following actions:
 1. **Rainfall** increases soil saturation across all patches.
