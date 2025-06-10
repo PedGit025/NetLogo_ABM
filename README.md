@@ -6,7 +6,7 @@ This model simulates rainfall-induced landslides on a psuedo sloped terrain. it 
 
 The model uses an agent-based approach with two main types of agents:
 - **Patches** represent units of terrain and hold information about elevation, soil saturation, sediment, and IF they have experienced a landslide.
-- **Turtles** represent trees that grow on patches with sufficiently high elevation. Trees are removed if a landslide occurs nearby (neighbor).
+- **Turtles** represent trees that grow on patches with sufficiently high elevation. Trees are removed if a landslide happen on the same patch. Trees are pulsing green to visually see trees are absorbing water, pulsing black indicating the patch used to have a tree but is not landslid.
 
 Each tick (time step), the model performs the following actions:
 1. **Rainfall** increases soil saturation across all patches.
