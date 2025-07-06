@@ -31,7 +31,7 @@ to setup
 
   ; __init__ terrain
   ask patches [
-    set elevation (100 - pxcor) + random-float 20   ; pseudo-slope
+    set elevation (100 + pycor) + random-float 20   ; pseudo-slope
     set pcolor scale-color green elevation 0 140
     set saturation 0
     set sediment 0
@@ -142,7 +142,8 @@ to check-landslide
   let vulnerable-patch nobody
 
   ask one-of patches with [not failed?] [
-    let slope (elevation - [elevation] of patch-at -1 0)
+    ;subtract patch above
+    let slope (elevation - [elevation] of patch-at 0 1)
     let tree-bonus 0
     if has-tree? [
       set tree-bonus random-float 50 + 10
@@ -152,6 +153,14 @@ to check-landslide
     print (word "Tick " ticks " Patch (" pxcor ", " pycor ") stability: " precision strength 2 " threshold: " landslide-threshold)
 
     if strength < landslide-threshold [
+      set vulnerable-patch self
+    ]
+
+    ;Check if the patch immediate above has failed- auto fail this assuming landslide goes down
+    let hasFailAbove? ([failed?] of patch-at 0 1)
+
+    if hasFailAbove? [
+      print (word "Tick " ticks " (" pxcor ", " pycor ") has fail patch above")
       set vulnerable-patch self
     ]
   ]
@@ -164,7 +173,8 @@ end
 to trigger-landslide
   let original-tree? has-tree?  ; if patch had tree before landslide
 
-  let slope (elevation - [elevation] of patch-at -1 0)
+  ;subtract patch above
+  let slope (elevation - [elevation] of patch-at 0 1)
   let tree-bonus 0
   if original-tree? [
     set tree-bonus random-float 60 + 10
@@ -308,7 +318,7 @@ rainfall-rate
 rainfall-rate
 0.1
 0.2
-0.1
+0.16
 0.01
 1
 NIL
@@ -323,7 +333,7 @@ landslide-threshold
 landslide-threshold
 -6
 1
--6.0
+-4.5
 .5
 1
 NIL
@@ -353,7 +363,7 @@ number-of-trees
 number-of-trees
 0
 250
-100.0
+0.0
 1
 1
 NIL
