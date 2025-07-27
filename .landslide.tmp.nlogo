@@ -72,7 +72,7 @@ to go
 
   tick
 
-  if all? patches [(pcolor = brown) or (pcolor = black)] [
+  if all? patches [(pcolor = brown] [
     user-message "Simulation stopped: All terrain has failed (fully landslided)."
     stop
   ]
