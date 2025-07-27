@@ -165,7 +165,9 @@ to checkLandslidePatch
     ;Check if the patch immediate above has failed- auto fail this assuming landslide goes down
     let hasFailAbove? ([failed?] of patch-at 0 1)
 
-    if hasFailAbove? [
+    ;If patch doesn't have tree
+    ;Auto fail- trees should resist landslide
+    if hasFailAbove? and (has-tree? = false) [
       print (word "Tick " ticks " (" pxcor ", " pycor ") has fail patch above")
       set vulnerable-patch self
     ]

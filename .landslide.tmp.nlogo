@@ -72,7 +72,7 @@ to go
 
   tick
 
-  if all? patches [(pcolor = brown] [
+  if all? patches [(pcolor = brown) or (pcolor = black)] [
     user-message "Simulation stopped: All terrain has failed (fully landslided)."
     stop
   ]
@@ -165,7 +165,7 @@ to checkLandslidePatch
     ;Check if the patch immediate above has failed- auto fail this assuming landslide goes down
     let hasFailAbove? ([failed?] of patch-at 0 1)
 
-    if hasFailAbove? [
+    if hasFailAbove?  [
       print (word "Tick " ticks " (" pxcor ", " pycor ") has fail patch above")
       set vulnerable-patch self
     ]
