@@ -53,6 +53,8 @@ See how sediment flows to neighboring patches after failure.
 
 Monitor the survival of tree and patch agents as the environment degrades.
 
+Logs from command center are saved locally.
+
 ## THINGS TO TRY
 
 1.Increase the `rainfall-rate` to simulate heavy storms and observe faster failure AVERAGE 20 mm of rain.
