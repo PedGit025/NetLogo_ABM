@@ -70,6 +70,8 @@ to go
   updatePatch
   update-monitor
 
+  setRainfall
+
   tick
 
   if all? patches [(pcolor = brown) or (pcolor = black)] [
@@ -111,22 +113,25 @@ to rainPatch
 end
 
 to setRainfall
+  ; Update total rainfall
   set total-rainfall total-rainfall + rainfall-rate
 
+  ; If there's any rainfall, create and animate raindrops
   if rainfall-rate > 0 [
-  ;print (word "Creating raindrops: " floor (rainfall-rate * 10))
-  create-raindrops floor (rainfall-rate * 10) [
-      setxy random-xcor max-pycor
+    create-raindrops floor (rainfall-rate * 20) [
+      setxy random-xcor max-pycor  ; Position at the top
       set color blue
-      set size 0.5
+      set size 0.8
     ]
   ]
-  ; removes raindrop
+
+  ; Move the raindrops downwards
   ask raindrops [
-    set ycor ycor - 0.4  ; falling speed
-    if ycor < min-pycor [ die ]
+    set ycor ycor - 1.5  ; Falling speed
+    if ycor < min-pycor [ die ]  ; Remove raindrop once it reaches the bottom
   ]
 end
+
 
 to saturatePatch
   if saturation > 100 [ set saturation 100 ] ; cap saturation to 100%
@@ -193,54 +198,57 @@ to checkSedimentSingle
 end
 
 to trigger-landslide
-  let original-tree? has-tree?  ; if patch had tree before landslide
+  ; Check if total-rainfall is greater than 3 before proceeding
+  if total-rainfall > 3 [
+    let original-tree? has-tree?  ; if patch had tree before landslide
 
-  ;subtract patch above
-  let slope (elevation - [elevation] of patch-at 0 1)
-  let tree-bonus 0
-  if original-tree? [
-    set tree-bonus random-float 60 + 10
-  ]
-  let strength (slope - (saturation / 2)) + (tree-bonus / 10)  ; scaled tree bonus visibly
+    ; subtract patch above
+    let slope (elevation - [elevation] of patch-at 0 1)
+    let tree-bonus 0
+    if original-tree? [
+      set tree-bonus random-float 60 + 10
+    ]
+    let strength (slope - (saturation / 2)) + (tree-bonus / 10)  ; scaled tree bonus visibly
 
-  ; Update patch to landslide state
-  set pcolor brown
-  set failed? true
-  set saturation 0
-  set sediment sediment + 5
-  set elevation elevation - 10
+    ; Update patch to landslide state
+    set pcolor brown
+    set failed? true
+    set saturation 0
+    set sediment sediment + 5
+    set elevation elevation - 10
 
-  ; Remove tree
-  ask trees-here [
-    die
-  ]
+    ; Remove tree
+    ask trees-here [
+      die
+    ]
 
-  set has-tree? false
-  if has-tree? [
-    set had-tree? true
-  ]
+    set has-tree? false
+    if has-tree? [
+      set had-tree? true
+    ]
 
-  if original-tree? [
-  set had-tree? true
-  ]
+    if original-tree? [
+      set had-tree? true
+    ]
 
-  set has-tree? false
+    set has-tree? false
 
-  ; Update globals
-  set total-trees count trees
-  set total-landslides total-landslides + 1
-  ;5?
-  set total-sediment total-sediment + 5
+    ; Update globals
+    set total-trees count trees
+    set total-landslides total-landslides + 1
+    set total-sediment total-sediment + 5
 
-  ; echo per landslide event:
-  ifelse original-tree? [
-    print (word "Tick " ticks " yes tree landslide at (" pxcor ", " pycor ") slope "
-                precision slope 2 " saturation strength " precision strength 2)
-  ] [
-    print (word "Tick " ticks " no tree landslide at (" pxcor ", " pycor ") slope "
-                precision slope 2 " saturation strength " precision strength 2)
+    ; echo per landslide event:
+    ifelse original-tree? [
+      print (word "Tick " ticks " yes tree landslide at (" pxcor ", " pycor ") slope "
+                  precision slope 2 " saturation strength " precision strength 2)
+    ] [
+      print (word "Tick " ticks " no tree landslide at (" pxcor ", " pycor ") slope "
+                  precision slope 2 " saturation strength " precision strength 2)
+    ]
   ]
 end
+
 
 to update-monitor
   set total-trees count trees
