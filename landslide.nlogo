@@ -78,6 +78,11 @@ to go
     user-message "Simulation stopped: All terrain has failed (fully landslided)."
     stop
   ]
+
+  if ticks > rainfallDuration [
+    user-message "Simulation stopped: Rain Ended"
+    stop
+  ]
 end
 
 ;Removed slowdown
@@ -333,7 +338,7 @@ rainfall-rate
 rainfall-rate
 0.1
 0.2
-0.11
+0.15
 0.01
 1
 NIL
@@ -363,7 +368,7 @@ sediment-flow-rate
 sediment-flow-rate
 0
 1
-0.1
+0.5
 0.1
 1
 NIL
@@ -378,7 +383,7 @@ number-of-trees
 number-of-trees
 0
 250
-64.0
+80.0
 1
 1
 NIL
@@ -481,6 +486,17 @@ false
 "" ""
 PENS
 "default" 1.0 0 -16777216 true "" "plot total-landslides"
+
+INPUTBOX
+245
+220
+400
+280
+rainfallDuration
+100.0
+1
+0
+Number
 
 @#$#@#$#@
 ## WHAT IS IT?
