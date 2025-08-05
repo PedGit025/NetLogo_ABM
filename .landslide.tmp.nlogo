@@ -70,10 +70,17 @@ to go
   updatePatch
   update-monitor
 
+  setRainfall
+
   tick
 
   if all? patches [(pcolor = brown) or (pcolor = black)] [
     user-message "Simulation stopped: All terrain has failed (fully landslided)."
+    stop
+  ]
+
+  if (ticks > rainfallDuration) and (rainfallDuration > 0)[
+    user-message "Simulation stopped: Rain Ended"
     stop
   ]
 end
@@ -111,22 +118,25 @@ to rainPatch
 end
 
 to setRainfall
+  ; Update total rainfall
   set total-rainfall total-rainfall + rainfall-rate
 
+  ; If there's any rainfall, create and animate raindrops
   if rainfall-rate > 0 [
-  ;print (word "Creating raindrops: " floor (rainfall-rate * 10))
-  create-raindrops floor (rainfall-rate * 10) [
-      setxy random-xcor max-pycor
+    create-raindrops floor (rainfall-rate * 20) [
+      setxy random-xcor max-pycor  ; Position at the top
       set color blue
-      set size 0.5
+      set size 0.8
     ]
   ]
-  ; removes raindrop
+
+  ; Move the raindrops downwards
   ask raindrops [
-    set ycor ycor - 0.4  ; falling speed
-    if ycor < min-pycor [ die ]
+    set ycor ycor - 1.5  ; Falling speed
+    if ycor < min-pycor [ die ]  ; Remove raindrop once it reaches the bottom
   ]
 end
+
 
 to saturatePatch
   if saturation > 100 [ set saturation 100 ] ; cap saturation to 100%
@@ -165,7 +175,9 @@ to checkLandslidePatch
     ;Check if the patch immediate above has failed- auto fail this assuming landslide goes down
     let hasFailAbove? ([failed?] of patch-at 0 1)
 
-    if hasFailAbove?  [
+    ;If patch doesn't have tree
+    ;Auto fail- trees should resist landslide
+    if hasFailAbove? and (has-tree? = false) [
       print (word "Tick " ticks " (" pxcor ", " pycor ") has fail patch above")
       set vulnerable-patch self
     ]
@@ -191,54 +203,57 @@ to checkSedimentSingle
 end
 
 to trigger-landslide
-  let original-tree? has-tree?  ; if patch had tree before landslide
+  ; Check if total-rainfall is greater than 3 before proceeding
+  if total-rainfall > 3 [
+    let original-tree? has-tree?  ; if patch had tree before landslide
 
-  ;subtract patch above
-  let slope (elevation - [elevation] of patch-at 0 1)
-  let tree-bonus 0
-  if original-tree? [
-    set tree-bonus random-float 60 + 10
-  ]
-  let strength (slope - (saturation / 2)) + (tree-bonus / 10)  ; scaled tree bonus visibly
+    ; subtract patch above
+    let slope (elevation - [elevation] of patch-at 0 1)
+    let tree-bonus 0
+    if original-tree? [
+      set tree-bonus random-float 60 + 10
+    ]
+    let strength (slope - (saturation / 2)) + (tree-bonus / 10)  ; scaled tree bonus visibly
 
-  ; Update patch to landslide state
-  set pcolor brown
-  set failed? true
-  set saturation 0
-  set sediment sediment + 5
-  set elevation elevation - 10
+    ; Update patch to landslide state
+    set pcolor brown
+    set failed? true
+    set saturation 0
+    set sediment sediment + 5
+    set elevation elevation - 10
 
-  ; Remove tree
-  ask trees-here [
-    die
-  ]
+    ; Remove tree
+    ask trees-here [
+      die
+    ]
 
-  set has-tree? false
-  if has-tree? [
-    set had-tree? true
-  ]
+    set has-tree? false
+    if has-tree? [
+      set had-tree? true
+    ]
 
-  if original-tree? [
-  set had-tree? true
-  ]
+    if original-tree? [
+      set had-tree? true
+    ]
 
-  set has-tree? false
+    set has-tree? false
 
-  ; Update globals
-  set total-trees count trees
-  set total-landslides total-landslides + 1
-  ;5?
-  set total-sediment total-sediment + 5
+    ; Update globals
+    set total-trees count trees
+    set total-landslides total-landslides + 1
+    set total-sediment total-sediment + 5
 
-  ; echo per landslide event:
-  ifelse original-tree? [
-    print (word "Tick " ticks " yes tree landslide at (" pxcor ", " pycor ") slope "
-                precision slope 2 " saturation strength " precision strength 2)
-  ] [
-    print (word "Tick " ticks " no tree landslide at (" pxcor ", " pycor ") slope "
-                precision slope 2 " saturation strength " precision strength 2)
+    ; echo per landslide event:
+    ifelse original-tree? [
+      print (word "Tick " ticks " yes tree landslide at (" pxcor ", " pycor ") slope "
+                  precision slope 2 " saturation strength " precision strength 2)
+    ] [
+      print (word "Tick " ticks " no tree landslide at (" pxcor ", " pycor ") slope "
+                  precision slope 2 " saturation strength " precision strength 2)
+    ]
   ]
 end
+
 
 to update-monitor
   set total-trees count trees
@@ -323,7 +338,7 @@ rainfall-rate
 rainfall-rate
 0.1
 0.2
-0.11
+0.15
 0.01
 1
 NIL
@@ -353,7 +368,7 @@ sediment-flow-rate
 sediment-flow-rate
 0
 1
-0.1
+0.5
 0.1
 1
 NIL
@@ -368,7 +383,7 @@ number-of-trees
 number-of-trees
 0
 250
-64.0
+80.0
 1
 1
 NIL
@@ -471,6 +486,17 @@ false
 "" ""
 PENS
 "default" 1.0 0 -16777216 true "" "plot total-landslides"
+
+INPUTBOX
+245
+220
+400
+280
+rainfallDuration
+200.0
+1
+0
+Number
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -883,6 +909,29 @@ NetLogo 6.4.0
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
+<experiments>
+  <experiment name="TreeExperiment" repetitions="1" runMetricsEveryStep="true">
+    <setup>setup</setup>
+    <go>go</go>
+    <metric>total-landslides</metric>
+    <metric>total-sediment</metric>
+    <metric>total-rainfall</metric>
+    <metric>total-trees</metric>
+    <enumeratedValueSet variable="rainfallDuration">
+      <value value="200"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="landslide-threshold">
+      <value value="-2.5"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rainfall-rate">
+      <value value="0.15"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="sediment-flow-rate">
+      <value value="0.5"/>
+    </enumeratedValueSet>
+    <steppedValueSet variable="number-of-trees" first="0" step="10" last="250"/>
+  </experiment>
+</experiments>
 @#$#@#$#@
 @#$#@#$#@
 default

@@ -79,7 +79,7 @@ to go
     stop
   ]
 
-  if ticks > rainfallDuration [
+  if (ticks > rainfallDuration) and (rainfallDuration > 0)[
     user-message "Simulation stopped: Rain Ended"
     stop
   ]
@@ -493,7 +493,7 @@ INPUTBOX
 400
 280
 rainfallDuration
-100.0
+200.0
 1
 0
 Number
@@ -909,6 +909,30 @@ NetLogo 6.4.0
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
+<experiments>
+  <experiment name="TreeExperiment" repetitions="5" runMetricsEveryStep="true">
+    <setup>setup</setup>
+    <go>go</go>
+    <metric>total-landslides</metric>
+    <enumeratedValueSet variable="rainfallDuration">
+      <value value="200"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="landslide-threshold">
+      <value value="-4.5"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rainfall-rate">
+      <value value="0.15"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="sediment-flow-rate">
+      <value value="0.5"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="number-of-trees">
+      <value value="0"/>
+      <value value="10"/>
+      <value value="250"/>
+    </enumeratedValueSet>
+  </experiment>
+</experiments>
 @#$#@#$#@
 @#$#@#$#@
 default
